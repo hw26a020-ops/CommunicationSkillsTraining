@@ -93,6 +93,7 @@ export default function App() {
   const [result, setResult] = useState<ResultData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showGiveUpConfirm, setShowGiveUpConfirm] = useState<boolean>(false);
+  const [playedTopics, setPlayedTopics] = useState<string[]>([]);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -153,7 +154,10 @@ export default function App() {
       const response = await fetch("/api/generate-topic", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ difficulty: difficultyKey }),
+        body: JSON.stringify({ 
+          difficulty: difficultyKey,
+          playedTopics: playedTopics
+        }),
       });
 
       if (!response.ok) {
@@ -165,6 +169,16 @@ export default function App() {
       setTopicDesc(data.description || "");
       setExplanation("");
       setTimeLeft(DIFFICULTIES[difficultyKey].timeLimit);
+
+      // プレイ履歴にお題を追加（直近20件保持）
+      setPlayedTopics((prev) => {
+        const next = [...prev, data.topic];
+        if (next.length > 20) {
+          next.shift();
+        }
+        return next;
+      });
+
       setScreen(Screen.Gameplay);
     } catch (err: any) {
       console.error(err);
